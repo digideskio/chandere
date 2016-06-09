@@ -20,5 +20,16 @@ setup(name="Chandere",
       include_package_data=True,
       install_requires=[],
       extras_require={},
-      entry_points={"console_scripts": ["chandere = chandere.cli:main"]}
+      entry_points={"console_scripts": ["chandere = chandere.cli:main"]},
+      classifiers=[
+          'Development Status :: 1 - Planning',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 3.5',
+          'Environment :: Console',
+          'Intended Audience :: End Users/Desktop',
+          'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+          'Topic :: Internet :: WWW/HTTP',
+          'Topic :: Text Processing',
+          'Topic :: Utilities'
+      ],
      )
