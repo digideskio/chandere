@@ -1,0 +1,10 @@
+*.egg-info
+*.pyc
+*.egg
+__pycache__/
+.tox/
+build/
+discarded/
+dist/
+docs/
+Chandere.egg-info/
