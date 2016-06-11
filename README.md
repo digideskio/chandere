@@ -1,4 +1,4 @@
-![Chandere](https://raw.github.com/TsarFox/chandere/master/Chandere_Logo.svg "Chandere")
+![Chandere](https://raw.github.com/TsarFox/chandere/master/Chandere_Logo.png "Chandere")
 ======
 ## A utility programmed and maintained by [Jakob.](http://tsar-fox.com/)
 Generalized scraper for Futaba-styled imageboards, such as 4chan. Capabilities range from downloading images to archiving entire boards.

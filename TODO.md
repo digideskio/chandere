@@ -1,7 +1,6 @@
 =====================
 By Next Minor Release
 =====================
-* PROPER unittests for threads, which will likely involve splitting them up into smaller functions as they cannot be tested in their current form.
 * Rewrap help text in cli.py
 
 
