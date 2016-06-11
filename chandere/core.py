@@ -3,16 +3,17 @@ imageboard.
 """
 
 try:
+    import queue
     from urllib.request import urlopen, urlretrieve
     from urllib.error import HTTPError
 except ImportError:
+    import Queue as queue
     from urllib import urlopen, urlretrieve
 from contextlib import closing
 import re
 import os
 import pickle
 import threading
-import queue
 import logging
 import time
 
@@ -54,7 +55,7 @@ def generate_urls(chan,
                 yield base_url + page_delimiter + str(page)
 
 
-def get_url_content(url_queue, html_queue, cache):
+def get_url_content(url_queue, html_queue, cache, debug=False):
     """Thread to handle connections to the imageboard being scraped from."""
     logging.info("Starting...")
     while True:
@@ -66,6 +67,7 @@ def get_url_content(url_queue, html_queue, cache):
                                    raw_html).group()
             if "404" in page_title:
                 logging.critical("Inexistent page \"%s\"." % url)
+                # The following is repeated four times. Should be refactored.
                 if url in [post[3] for post in cache]:
                     for index, post in enumerate(cache):
                         if post[3] == url:
@@ -73,19 +75,35 @@ def get_url_content(url_queue, html_queue, cache):
                             del cache[index]
             elif "access denied" in page_title.lower():
                 logging.critical("Servers are blocking web scrapers.")
-                exit(1)
+                if url in [post[3] for post in cache]:
+                    for index, post in enumerate(cache):
+                        if post[3] == url:
+                            logging.warning("Removing url from cache.")
+                            del cache[index]
             else:
                 html_queue.put(raw_html)
                 logging.info("Page, \"%s\", loaded." % page_title)
         except HTTPError as httpstatus:
             if str(httpstatus) == "HTTP Error 404: Not Found":
                 logging.critical("Inexistent page \"%s\"." % url)
+                if url in [post[3] for post in cache]:
+                    for index, post in enumerate(cache):
+                        if post[3] == url:
+                            logging.warning("Removing url from cache.")
+                            del cache[index]
             elif str(httpstatus) == "HTTP Error 403: Forbidden":
                 logging.critical("Servers are blocking web scrapers.")
+                if url in [post[3] for post in cache]:
+                    for index, post in enumerate(cache):
+                        if post[3] == url:
+                            logging.warning("Removing url from cache.")
+                            del cache[index]
+        if debug:
+            break
 
 
-def scrape_html(offsets, mode, chan, html_queue, data_queue, cache, ssl,
-                thread_delimiter):
+def scrape_html(offsets, mode, chan, html_queue, data_queue, cache, ssl=False,
+                thread_delimiter="thread/", debug=False):
     logging.info("Starting...")
     while True:
         html = html_queue.get()
@@ -194,9 +212,11 @@ def scrape_html(offsets, mode, chan, html_queue, data_queue, cache, ssl,
                                         post_id,
                                         ssl,
                                         thread_delimiter=thread_delimiter))))
+        if debug:
+            break
 
 
-def write_to_disk(mode, output, write_mode, data_queue):
+def write_to_disk(mode, output, write_mode, data_queue, debug=False):
     """Thread for writing scraped data to disk."""
     logging.info("Starting...")
     if mode == "id":
@@ -231,6 +251,8 @@ def write_to_disk(mode, output, write_mode, data_queue):
                         if parent_id else "", name, date, time, body))
                 logging.info("Post %s successfully archived!" % post_id)
                 output_file.seek(0, 0)
+                if debug:
+                    break
 
 
 def load_cache(mode, dump_file):
@@ -270,7 +292,7 @@ def dump_cache(mode, cache, dump_file):
         logging.info("Cache dumped to \"%s\"." % dump_file)
 
 
-def create_offsets(mode, chan):
+def create_offsets(mode, chan=None):
     """Compile the regular expressions associated with the given imageboard."""
     if mode == "ar" and chan == "lainchan":
         offsets = {
@@ -438,6 +460,11 @@ def main(mode,
                                     args=(mode, output, write_mode,
                                           data_queue))
     try:
+        if any([combination[1] for combination in combinations]):
+            temporary_cache = [item for item in cache]
+            cache = []
+        else:
+            temporary_cache = []
         for board, thread in combinations:
             for url in generate_urls(chan,
                                      board,
@@ -454,14 +481,9 @@ def main(mode,
         connection_thread.start()
         scraper_thread.start()
         write_thread.start()
-        ignore_cached_posts = not any(
-            [not combination[1] for combination in combinations])
         while True:
             for item in cache:
-                if item[1] is None:
-                    url_queue.put(item[3])
-                elif not ignore_cached_posts:
-                    url_queue.put(item[3])
+                url_queue.put(item[3])
             time.sleep(refresh_rate)
     except KeyboardInterrupt:
         logging.critical("SIGINT received, quitting.")

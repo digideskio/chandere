@@ -1,8 +1,10 @@
 *.egg-info
 *.pyc
 *.egg
+BUGS
 __pycache__/
 .tox/
+BUGS
 build/
 discarded/
 dist/

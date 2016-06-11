@@ -7,7 +7,7 @@ except ImportError:
 
 setup(name="Chandere",
       license="GPLv3",
-      version="0.1.0dev1",
+      version="0.1.1dev1",
       author="Jakob Tsar-Fox",
       author_email="jakob@memeware.net",
       maintainer="Jakob Tsar-Fox",
